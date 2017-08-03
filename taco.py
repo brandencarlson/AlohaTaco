@@ -11,7 +11,6 @@ def isThisValid(evt):
         for uid in users:
             uid = uid.replace("<@", "")
             uid =uid.replace(">", "")
-            print uid
             tacoLogic(uid, evt, num_tacos)
             
 
@@ -22,9 +21,10 @@ def tacoLogic(uid, evt, num_tacos):
         if taco_give_dict[sender] >= num_tacos:
             taco_give_dict[sender] -= num_tacos
             taco_dict[reciever] += num_tacos
+            dm = sc.api_call("im.open", user=sender)
+            print dm
             reponse = sc.api_call("chat.postMessage", channel="#tacotest", text="<@" + reciever + "> now has: " + str(taco_dict[reciever]) + " tacos!")
-            reponse = sc.api_call("chat.postMessage", channel="#tacotest", text="<@" + sender + "> has given " + str(5 -taco_give_dict[sender]) + " tacos today")
-            print reponse
+            reponse = sc.api_call("chat.postMessage", channel=dm.get("id"), as_user=False, text= "You have given " + str(5 -taco_give_dict[sender]) + " tacos today. You have " + str(taco_give_dict[sender]) + " tacos remaining today.")
         else:
             reponse = sc.api_call("chat.postMessage", channel="#tacotest", text="Not enough tacos to give today, try again tomorrow")
 
@@ -52,7 +52,6 @@ if sc.rtm_connect():
         print events
         for evt in events:
             if(evt["type"] == "message"):
-                print evt["text"]
                 isThisValid(evt)
         time.sleep(1)
 else:
