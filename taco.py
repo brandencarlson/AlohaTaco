@@ -17,14 +17,16 @@ def isThisValid(evt):
 def tacoLogic(uid, evt, num_tacos):
     sender = evt["user"]
     reciever = uid
+    if sender == reciever:
+        return
     if reciever in taco_dict and sender in taco_give_dict:
         if taco_give_dict[sender] >= num_tacos:
             taco_give_dict[sender] -= num_tacos
             taco_dict[reciever] += num_tacos
-            dm = sc.api_call("im.open", user=sender)
-            print dm
-            reponse = sc.api_call("chat.postMessage", channel="#tacotest", text="<@" + reciever + "> now has: " + str(taco_dict[reciever]) + " tacos!")
-            reponse = sc.api_call("chat.postMessage", channel=dm.get("id"), as_user=False, text= "You have given " + str(5 -taco_give_dict[sender]) + " tacos today. You have " + str(taco_give_dict[sender]) + " tacos remaining today.")
+            dm_sender = sc.api_call("im.open", user=sender)
+            dm_reciever = sc.api_call("im.open", user=reciever)
+            reponse = sc.api_call("chat.postMessage", channel=dm_reciever.get("channel").get("id"), text="You have recieved " + str(num_tacos) + " tacos from <@" + sender + ">! You have: " + str(taco_dict[reciever]) + " tacos!")
+            reponse = sc.api_call("chat.postMessage", channel=dm_sender.get("channel").get("id"), as_user=False, text= "You have given " + str(5 -taco_give_dict[sender]) + " tacos today. You have " + str(taco_give_dict[sender]) + " tacos remaining today.")
         else:
             reponse = sc.api_call("chat.postMessage", channel="#tacotest", text="Not enough tacos to give today, try again tomorrow")
 
