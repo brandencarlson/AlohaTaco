@@ -41,9 +41,10 @@ api_call = sc.api_call("users.list")
 if api_call.get('ok'):
     users = api_call.get("members")
     for user in users:
-        taco_give_dict[user.get("id")] = 5
-        taco_dict[user.get("id")] = 0
-        print user.get("id")
+        uid = user["id"]
+        taco_give_dict[uid] = 5
+        taco_dict[uid] = 0
+        print uid
 
 
 if sc.rtm_connect():
