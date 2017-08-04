@@ -22,14 +22,14 @@ def parseMessage(evt):
             uid = uid.replace("<@", "").replace(">", "")
             tacoLogic(uid, evt, num_tacos)
     elif aloha_taco_id in text and "leaderboard" in text:
-        sc.api_call("chat.postMessage", channel=evt["channel"], text = get_leaderboard(4))
+        sc.api_call("chat.postMessage", channel=evt["channel"], text=get_leaderboard(10))
     elif aloha_taco_id in text and "stats <@" in text:
         for uid in users:
             if uid == aloha_taco_id:
                 continue
-            uid_fix = uid.replace("<@", "").replace(">", "")
+            uid = uid.replace("<@", "").replace(">", "")
             # username = sc.api_call("users.profile.get", user=uid, include_labels=False)
-            sc.api_call("chat.postMessage", channel=evt["channel"], text=get_stats(uid, uid_fix))
+            sc.api_call("chat.postMessage", channel=evt["channel"], text=get_stats(uid))
 
 def tacoLogic(uid, evt, num_tacos):
     sender = evt["user"]
@@ -97,8 +97,8 @@ def get_leaderboard(n):
             s += str(i+1) + "). " + id_to_handle[user[0]] + "  *" + str(user[1]) + "*\n"
     return s
 
-def get_stats(uid, uid_fix):
-    s = str(uid) + " has recieved " + str(taco_dict[uid_fix]) + " tacos and given " + str(taco_lifetime[uid_fix]) + " tacos!"
+def get_stats(uid):
+    s = str(id_to_handle[uid]) + " has recieved " + str(taco_dict[uid]) + " tacos and given " + str(taco_lifetime[uid]) + " tacos!"
     return s
 
 init_map()
