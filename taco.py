@@ -39,28 +39,30 @@ sc = SlackClient(token)
 taco_dict = {}
 taco_give_dict = {}
 
-api_call = sc.api_call("users.list")
-if api_call.get('ok'):
-    users = api_call.get("members")
-    for user in users:
-        uid = user["id"]
-        taco_give_dict[uid] = 5
-        taco_dict[uid] = 0
-        print uid
+def init_map():
+    api_call = sc.api_call("users.list")
+    if api_call.get('ok'):
+        users = api_call.get("members")
+        for user in users:
+            uid = user["id"]
+            taco_give_dict[uid] = 5
+            taco_dict[uid] = 0
+            print uid
 
+def start_listening():
+    if sc.rtm_connect():
+        while True:
+            events = sc.rtm_read()
+            print events
+            for evt in events:
+                if(evt["type"] == "message"):
+                    isThisValid(evt)
+            time.sleep(1)
+    else:
+        print "Connection Failed, invalid token?"
 
-if sc.rtm_connect():
-    while True:
-        events = sc.rtm_read()
-        print events
-        for evt in events:
-            if(evt["type"] == "message"):
-                isThisValid(evt)
-        time.sleep(1)
-else:
-    print "Connection Failed, invalid token?"
-
-
+init_map()
+start_listening()
 
 
 
