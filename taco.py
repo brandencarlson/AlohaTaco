@@ -2,19 +2,27 @@ from slackclient import SlackClient
 import os
 import time
 import re
+import operator
 
+aloha_taco_id = "<@U6HC2N4AD>"
+token = os.environ["SLACK_API_TOKEN"]
+sc = SlackClient(token)
 
-def parseMessagess(evt):
-    num_tacos = len(re.findall(":taco:", evt["text"]))
-    users = re.findall("<@.........>", evt["text"])
+taco_dict = {}
+taco_give_dict = {}
+taco_lifetime = {}
+
+def parseMessage(evt):
+    text = evt["text"]
+    num_tacos = len(re.findall(":taco:", text))
+    users = re.findall("<@.........>", text)
     if num_tacos > 0:
         for uid in users:
-            uid = uid.replace("<@", "")
-            uid =uid.replace(">", "")
+            uid = uid.replace("<@", "").replace(">", "")
             tacoLogic(uid, evt, num_tacos)
-    elif "<@U6HC2N4AD>" in evt["text"] and "leaderboard" in evt["text"]:
-        sc.api_call("chat.postMessage", channel=evt["channel"], text= "um... not ready yet")
-    elif "<@U6HC2N4AD>" in evt["text"] and "stats <@" in evt["text"]:
+    elif aloha_taco_id in text and "leaderboard" in text:
+        sc.api_call("chat.postMessage", channel=evt["channel"], text = get_leaderboard(4))
+    elif aloha_taco_id in text and "stats <@" in text:
         for uid in users:
             if uid == "<@U6HC2N4AD>":
                 continue
@@ -42,14 +50,6 @@ def tacoLogic(uid, evt, num_tacos):
 
 
 
-
-token = os.environ["SLACK_API_TOKEN"]
-sc = SlackClient(token)
-
-taco_dict = {}
-taco_give_dict = {}
-taco_lifetime = {}
-
 def init_map():
     api_call = sc.api_call("users.list")
     if api_call.get('ok'):
@@ -68,10 +68,20 @@ def start_listening():
             print events
             for evt in events:
                 if(evt["type"] == "message"):
-                    parseMessagess(evt)
+                    parseMessage(evt)
             time.sleep(1)
     else:
         print "Connection Failed, invalid token?"
+
+def get_leaderboard(n):
+    top_n = sorted(taco_dict.items(), key=operator.itemgetter(1), reverse = True)[:n]
+    print(top_n)
+    s = "AlohaTaco Leaderboard:\n"
+    for user in top_n:
+        print user
+        if user[1] > 0:
+            s += "<@" + user[0] + ">: " + str(user[1]) + " tacos\n"
+    return s
 
 init_map()
 start_listening()
