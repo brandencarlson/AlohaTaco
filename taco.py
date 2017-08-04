@@ -104,11 +104,12 @@ def get_stats(uid):
     return s
 
 def isValidUser(uid):
+    api_call = sc.api_call("users.list")
     if uid not in taco_dict:
         taco_dict[uid] = 0
         taco_give_dict[uid] = 5
         taco_lifetime[uid] = 0
-        users = sc.api_call.get("members")
+        users = api_call.get("members")
         for user in users:
             if user["name"] not in id_to_handle[user["id"]]:
                 id_to_handle[uid] = user["name"]
