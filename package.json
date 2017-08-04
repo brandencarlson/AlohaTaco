@@ -1,8 +1,7 @@
 {
   "name": "AlohaTaco",
   "scripts": {
-    "start": "node ./src",
-    "notify": "node ./src/tasks/notify",
+    "start": "python taco.py",
     "test": "standard"
   },
   "engines": {
@@ -11,5 +10,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/brandencarlson/AlohaTaco"
-  },
+  }
 }
