@@ -19,6 +19,7 @@ def parseMessage(evt):
     users = re.findall("<@.........>", text)
     if num_tacos > 0:
         for uid in users:
+            isValidUser(uid)
             uid = uid.replace("<@", "").replace(">", "")
             tacoLogic(uid, evt, num_tacos)
     elif aloha_taco_id in text and "leaderboard" in text:
@@ -27,6 +28,7 @@ def parseMessage(evt):
         for uid in users:
             if uid == aloha_taco_id:
                 continue
+            isValidUser(uid)
             uid = uid.replace("<@", "").replace(">", "")
             # username = sc.api_call("users.profile.get", user=uid, include_labels=False)
             sc.api_call("chat.postMessage", channel=evt["channel"], text=get_stats(uid))
@@ -100,6 +102,17 @@ def get_leaderboard(n):
 def get_stats(uid):
     s = str(id_to_handle[uid]) + " has recieved " + str(taco_dict[uid]) + " tacos and given " + str(taco_lifetime[uid]) + " tacos!"
     return s
+
+def isValidUser(uid):
+    if uid not in taco_dict:
+        taco_dict[uid] = 0
+        taco_give_dict[uid] = 5
+        taco_lifetime[uid] = 0
+        users = api_call.get("members")
+        for user in users:
+            if user["name"] not in id_to_handle[user["id"]]:
+                id_to_handle[uid] = user["name"]
+
 
 init_map()
 start_listening()
