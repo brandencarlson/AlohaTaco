@@ -11,6 +11,7 @@ sc = SlackClient(token)
 taco_dict = {}
 taco_give_dict = {}
 taco_lifetime = {}
+id_to_handle = {}
 
 def parseMessage(evt):
     text = evt["text"]
@@ -24,12 +25,11 @@ def parseMessage(evt):
         sc.api_call("chat.postMessage", channel=evt["channel"], text = get_leaderboard(4))
     elif aloha_taco_id in text and "stats <@" in text:
         for uid in users:
-            if uid == "<@U6HC2N4AD>":
+            if uid == aloha_taco_id:
                 continue
-            uid_fix = uid.replace("<@", "")
-            uid_fix =uid_fix.replace(">", "")
+            uid_fix = uid.replace("<@", "").replace(">", "")
             # username = sc.api_call("users.profile.get", user=uid, include_labels=False)
-            sc.api_call("chat.postMessage", channel=evt["channel"], text= str(uid) + " has recieved " + str(taco_dict[uid_fix]) + " tacos and given " + str(taco_lifetime[uid_fix]) + " tacos!")
+            sc.api_call("chat.postMessage", channel=evt["channel"], text=get_stats(uid_fix))
 
 def tacoLogic(uid, evt, num_tacos):
     sender = evt["user"]
@@ -38,7 +38,7 @@ def tacoLogic(uid, evt, num_tacos):
         return
     if reciever in taco_dict and sender in taco_give_dict:
         if taco_give_dict[sender] >= num_tacos:
-            taco_give_dict[sender]-= num_tacos
+            taco_give_dict[sender] -= num_tacos
             taco_lifetime[sender] += num_tacos
             taco_dict[reciever] += num_tacos
             dm_sender = sc.api_call("im.open", user=sender)
@@ -56,10 +56,23 @@ def init_map():
         users = api_call.get("members")
         for user in users:
             uid = user["id"]
+
             taco_give_dict[uid] = 5
             taco_dict[uid] = 0
             taco_lifetime[uid] = 0
-            print uid
+
+            id_to_handle[uid] = user["name"]
+            print uid + " " + user["name"]
+
+def reset_daily_tacos():
+    api_call = sc.api_call("users.list")
+    if api_call.get('ok'):
+        users = api_call.get("members")
+        for user in users:
+            uid = user["id"]
+            taco_give_dict[uid] = 5
+            if user["name"] != id_to_handle[uid]:
+                id_to_handle[uid] = user["name"]
 
 def start_listening():
     if sc.rtm_connect():
@@ -76,11 +89,16 @@ def start_listening():
 def get_leaderboard(n):
     top_n = sorted(taco_dict.items(), key=operator.itemgetter(1), reverse = True)[:n]
     print(top_n)
-    s = "AlohaTaco Leaderboard:\n"
-    for user in top_n:
+    s = "*salesforceIQ Leaderboard*\n"
+    for i in range(n):
+        user = top_n[i]
         print user
         if user[1] > 0:
-            s += "<@" + user[0] + ">: " + str(user[1]) + " tacos\n"
+            s += str(i+1) + "). " + id_to_handle[user[0]] + "  *" + str(user[1]) + "*\n"
+    return s
+
+def get_stats(uid):
+    s = str(uid) + " has recieved " + str(taco_dict[uid_fix]) + " tacos and given " + str(taco_lifetime[uid_fix]) + " tacos!"
     return s
 
 init_map()
