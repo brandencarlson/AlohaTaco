@@ -3,6 +3,7 @@ import os
 import time
 import re
 import operator
+from datetime import date
 
 aloha_taco_id = "<@U6HC2N4AD>"
 token = os.environ["SLACK_API_TOKEN"]
@@ -12,6 +13,7 @@ taco_dict = {}
 taco_give_dict = {}
 taco_lifetime = {}
 id_to_handle = {}
+daily_reset_checklist = {}
 
 def parseMessage(evt):
     text = evt["text"]
@@ -35,20 +37,28 @@ def parseMessage(evt):
 
 def tacoLogic(uid, evt, num_tacos):
     sender = evt["user"]
-    reciever = uid
-    if sender == reciever:
+    receiver = uid
+    if sender == receiver:
         return
-    if reciever in taco_dict and sender in taco_give_dict:
-        if taco_give_dict[sender] >= num_tacos:
-            taco_give_dict[sender] -= num_tacos
-            taco_lifetime[sender] += num_tacos
-            taco_dict[reciever] += num_tacos
-            dm_sender = sc.api_call("im.open", user=sender)
-            dm_reciever = sc.api_call("im.open", user=reciever)
-            reponse = sc.api_call("chat.postMessage", channel=dm_reciever.get("channel").get("id"), text="You have recieved " + str(num_tacos) + " tacos from <@" + sender + ">! You have: " + str(taco_dict[reciever]) + " tacos!")
-            reponse = sc.api_call("chat.postMessage", channel=dm_sender.get("channel").get("id"), as_user=False, text= "You have given " + str(5 -taco_give_dict[sender]) + " tacos today. You have " + str(taco_give_dict[sender]) + " tacos remaining today.")
-        else:
-            reponse = sc.api_call("chat.postMessage", channel="#tacotest", text="Not enough tacos to give today, try again tomorrow")
+    if receiver in taco_dict and sender in taco_give_dict:
+        tacoTransaction(receiver, sender, num_tacos)
+    else:
+        refresh_user_dicts()
+        if receiver not in taco_dict or sender not in taco_give_dict:
+            return
+        tacoTransaction(receiver, sender, num_tacos)
+
+def tacoTransaction(receiver, sender, num_tacos):
+    if taco_give_dict[sender] >= num_tacos:
+        taco_give_dict[sender] -= num_tacos
+        taco_lifetime[sender] += num_tacos
+        taco_dict[receiver] += num_tacos
+        dm_sender = sc.api_call("im.open", user=sender)
+        dm_receiver = sc.api_call("im.open", user=receiver)
+        reponse = sc.api_call("chat.postMessage", channel=dm_receiver.get("channel").get("id"), text="You have recieved " + str(num_tacos) + " tacos from <@" + sender + ">! You have: " + str(taco_dict[receiver]) + " tacos!")
+        reponse = sc.api_call("chat.postMessage", channel=dm_sender.get("channel").get("id"), as_user=False, text= "You have given " + str(5 -taco_give_dict[sender]) + " tacos today. You have " + str(taco_give_dict[sender]) + " tacos remaining today.")
+    else:
+        reponse = sc.api_call("chat.postMessage", channel="#tacotest", text="Not enough tacos to give today, try again tomorrow")
 
 
 
@@ -66,19 +76,43 @@ def init_map():
             id_to_handle[uid] = user["name"]
             print uid + " " + user["name"]
 
+def refresh_user_dicts():
+    api_call = sc.api_call("users.list")
+    if api_call.get('ok'):
+        users = api_call.get("members")
+        for user in users:
+            uid = user["id"]
+            if uid not in taco_dict:
+                taco_give_dict[uid] = 5
+                taco_dict[uid] = 0
+                taco_lifetime[uid] = 0
+
+                id_to_handle[uid] = user["name"]
+                print "Added " + uid + " " + user["name"]
+
 def reset_daily_tacos():
     api_call = sc.api_call("users.list")
     if api_call.get('ok'):
         users = api_call.get("members")
         for user in users:
             uid = user["id"]
-            taco_give_dict[uid] = 5
-            if user["name"] != id_to_handle[uid]:
+            if uid not in id_to_handle:
                 id_to_handle[uid] = user["name"]
+            if uid not in taco_give_dict:
+                taco_give_dict[uid] = 5
+            if uid not in taco_dict:
+                taco_dict[uid] = 0
+            if uid not in taco_lifetime:
+                taco_lifetime[uid] = 0
+        daily_reset_checklist[date.today()] = True
+    else:
+        daily_reset_checklist[date.today()] = False
 
 def start_listening():
     if sc.rtm_connect():
         while True:
+            if date.today() not in daily_reset_checklist or not daily_reset_checklist[date.today()]:
+                reset_daily_tacos()
             events = sc.rtm_read()
             print events
             for evt in events:
@@ -117,8 +151,4 @@ def isValidUser(uid):
 
 init_map()
 start_listening()
-
-
-
-
 
