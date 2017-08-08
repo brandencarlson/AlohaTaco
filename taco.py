@@ -26,6 +26,8 @@ def parseMessage(evt):
             tacoLogic(uid, evt, num_tacos)
     elif aloha_taco_id in text and "leaderboard" in text:
         sc.api_call("chat.postMessage", channel=evt["channel"], text=get_leaderboard(10))
+    elif aloha_taco_id in text and "help" in text:  
+        sc.api_call("chat.postMessage", channel=evt["channel"], text="To give someone a taco, just tag them in a message with a :taco:!\nYou can up to 5 tacos a day, your tacos reset at midnight.\nTo see who has the most tacos, type `@alohataco leaderboard`!\nTo see an individuals taco stats, type `@alohataco stats @who-you-want-to-see`!\nStart giving those tacos!")
     elif aloha_taco_id in text and "stats <@" in text:
         for uid in users:
             if uid == aloha_taco_id:
@@ -96,10 +98,9 @@ def reset_daily_tacos():
         users = api_call.get("members")
         for user in users:
             uid = user["id"]
+            taco_give_dict[uid] = 5
             if uid not in id_to_handle:
                 id_to_handle[uid] = user["name"]
-            if uid not in taco_give_dict:
-                taco_give_dict[uid] = 5
             if uid not in taco_dict:
                 taco_dict[uid] = 0
             if uid not in taco_lifetime:
